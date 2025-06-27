@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RustMagic & Cheersino Leaderboard</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(180deg, #0a0c1a 0%, #020214 100%);
+      color: #eee;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+    /* Статичне зоряне небо */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,0.15) 2px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,0.1) 1.5px, transparent 1.5px);
+      background-position: 10px 10px, 50px 50px, 90px 90px;
+      background-repeat: repeat;
+      background-size: 100px 100px, 150px 150px, 200px 200px;
+      pointer-events: none;
+      z-index: -1;
+    }
+    #content {
+      max-width: 960px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    .tab-button {
+      padding: 12px 40px;
+      border: none;
+      border-radius: 30px;
+      background: #3b6ef6;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+      filter: brightness(0.8);
+      user-select: none;
+    }
+    .tab-button.active {
+      filter: brightness(1);
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #3b6ef6aa;
+    }
+    h1 {
+      text-align: center;
+      color: #3b6ef6;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      user-select: none;
+    }
+    #timer-container {
+      text-align: center;
+      color: #6ea1ff;
+      font-weight: 600;
+      margin-bottom: 30px;
+      user-select: none;
+    }
+    #top3 {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 30px;
+      margin-bottom: 40px;
+      background: rgba(59,110,246,0.3);
+      padding: 20px 0;
+      border-radius: 16px;
+      box-shadow: 0 0 20px #3b6ef6cc;
+    }
+    .top-card {
+      width: 150px;
+      padding: 20px;
+      background: transparent;
+      border: 2px solid #3b6ef6;
+      border-radius: 16px;
+      text-align: center;
+      color: #d0e2ff;
+      box-shadow: 0 0 8px #3b6ef6cc;
+      transition: 0.3s;
+      user-select: none;
+    }
+    .top-card.first {
+      width: 180px;
+      padding: 25px;
+      font-size: 1.1rem;
+      color: #e0ecff;
+    }
+    .top-card.second,
+    .top-card.third {
+      transform: scale(0.9);
+      margin-bottom: 20px;
+    }
+    .top-card img {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 1.5px solid #3b6ef6;
+      margin-bottom: 12px;
+      object-fit: cover;
+    }
+    .top-card .name { font-weight: 700; margin-bottom: 8px; }
+    .top-card .wager { font-weight: 600; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(59,110,246,0.3);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 15px #3b6ef6bb;
+      color: #c7d7ff;
+      user-select: none;
+    }
+    thead { background: rgba(59,110,246,0.5); color: #e0ecff; }
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid rgba(0,0,0,0.3);
+      font-weight: 600;
+    }
+    tbody tr:nth-child(even) { background: rgba(35,55,130,0.3); }
+    tbody img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid #3b6ef6;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+  <div id="content">
+    <div class="tabs">
+      <button class="tab-button active" data-board="cheersino">Cheersino</button>
+      <button class="tab-button" data-board="rustmagic">RustMagic</button>
+    </div>
+    <h1 id="page-title">Cheersino Leaderboard</h1>
+    <div id="timer-container">
+      Time left to update: <span id="timer">--</span>
+    </div>
+    <div id="top3"></div>
+    <table>
+      <thead>
+        <tr><th>Place</th><th>Avatar</th><th>Nickname</th><th>Wager</th></tr>
+      </thead>
+      <tbody id="others"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Ваш API endpoint та ключ
+    const API_BASE = 'https://rustmagic.com/r/piuz';
+    const API_KEY  = '00c5bb44-21d2-40e1-81da-8d64733de6a1';
+
+    const tabs = document.querySelectorAll('.tab-button');
+    const title = document.getElementById('page-title');
+    const top3Div = document.getElementById('top3');
+    const othersTbody = document.getElementById('others');
+    let current = 'cheersino';
+
+    async function fetchBoard(board) {
+      const res = await fetch(`${API_BASE}?board=${board}`, {
+        headers: { 'Authorization': API_KEY }
+      });
+      if (!res.ok) throw new Error(`API error ${res.status}`);
+      return res.json();
+    }
+
+    function render(players) {
+      title.textContent = `${current.charAt(0).toUpperCase()+current.slice(1)} Leaderboard`;
+      top3Div.innerHTML = '';
+      othersTbody.innerHTML = '';
+      players.sort((a,b) => b.wager - a.wager);
+
+      // Top 3
+      players.slice(0,3).forEach((p,i) => {
+        const c = document.createElement('div');
+        c.className = `top-card ${i===0?'first':i===1?'second':'third'}`;
+        c.innerHTML = `
+          <img src="${p.avatar}" alt="">
+          <div class="name">${p.name}</div>
+          <div class="wager">${p.wager} coins</div>`;
+        top3Div.appendChild(c);
+      });
+
+      // Places 4–10
+      players.slice(3,10).forEach((p,idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${idx+4}</td>
+          <td><img src="${p.avatar}" alt=""></td>
+          <td>${p.name}</td>
+          <td>${p.wager} coins</td>`;
+        othersTbody.appendChild(tr);
+      });
+    }
+
+    async function load(board) {
+      try {
+        const data = await fetchBoard(board);
+        render(data);
+      } catch(e) {
+        console.error(e);
+      }
+    }
+
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabs.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        current = btn.dataset.board;
+        load(current);
+      });
+    });
+
+    function updateTimer() {
+      const now = new Date();
+      const day = now.getUTCDay(), h = now.getUTCHours(),
+            m = now.getUTCMinutes(), s = now.getUTCSeconds();
+      let days = (8-day)%7, hrs = 23-h, mins = 59-m, secs = 59-s;
+      const pad = x => x.toString().padStart(2,'0');
+      document.getElementById('timer').textContent =
+        `${pad(days)}d ${pad(hrs)}h ${pad(mins)}m ${pad(secs)}s`;
+    }
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    load(current);
+  </script>
+</body>
+</html>
