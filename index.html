@@ -1,247 +1,355 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>RustMagic & Cheersino Leaderboard</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(180deg, #0a0c1a 0%, #020214 100%);
-      color: #eee;
-      min-height: 100vh;
-      overflow-x: hidden;
-      position: relative;
-    }
-    /* Статичне зоряне небо */
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background:
-        radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px),
-        radial-gradient(circle, rgba(255,255,255,0.15) 2px, transparent 2px),
-        radial-gradient(circle, rgba(255,255,255,0.1) 1.5px, transparent 1.5px);
-      background-position: 10px 10px, 50px 50px, 90px 90px;
-      background-repeat: repeat;
-      background-size: 100px 100px, 150px 150px, 200px 200px;
-      pointer-events: none;
-      z-index: -1;
-    }
-    #content {
-      max-width: 960px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }
-    .tabs {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 30px;
-    }
-    .tab-button {
-      padding: 12px 40px;
-      border: none;
-      border-radius: 30px;
-      background: #3b6ef6;
-      color: #fff;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.3s;
-      filter: brightness(0.8);
-      user-select: none;
-    }
-    .tab-button.active {
-      filter: brightness(1);
-      transform: scale(1.05);
-      box-shadow: 0 0 10px #3b6ef6aa;
-    }
-    h1 {
-      text-align: center;
-      color: #3b6ef6;
-      font-size: 2.5rem;
-      margin-bottom: 20px;
-      user-select: none;
-    }
-    #timer-container {
-      text-align: center;
-      color: #6ea1ff;
-      font-weight: 600;
-      margin-bottom: 30px;
-      user-select: none;
-    }
-    #top3 {
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      gap: 30px;
-      margin-bottom: 40px;
-      background: rgba(59,110,246,0.3);
-      padding: 20px 0;
-      border-radius: 16px;
-      box-shadow: 0 0 20px #3b6ef6cc;
-    }
-    .top-card {
-      width: 150px;
-      padding: 20px;
-      background: transparent;
-      border: 2px solid #3b6ef6;
-      border-radius: 16px;
-      text-align: center;
-      color: #d0e2ff;
-      box-shadow: 0 0 8px #3b6ef6cc;
-      transition: 0.3s;
-      user-select: none;
-    }
-    .top-card.first {
-      width: 180px;
-      padding: 25px;
-      font-size: 1.1rem;
-      color: #e0ecff;
-    }
-    .top-card.second,
-    .top-card.third {
-      transform: scale(0.9);
-      margin-bottom: 20px;
-    }
-    .top-card img {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      border: 1.5px solid #3b6ef6;
-      margin-bottom: 12px;
-      object-fit: cover;
-    }
-    .top-card .name { font-weight: 700; margin-bottom: 8px; }
-    .top-card .wager { font-weight: 600; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: rgba(59,110,246,0.3);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 0 15px #3b6ef6bb;
-      color: #c7d7ff;
-      user-select: none;
-    }
-    thead { background: rgba(59,110,246,0.5); color: #e0ecff; }
-    th, td {
-      padding: 12px;
-      text-align: center;
-      border-bottom: 1px solid rgba(0,0,0,0.3);
-      font-weight: 600;
-    }
-    tbody tr:nth-child(even) { background: rgba(35,55,130,0.3); }
-    tbody img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: 1px solid #3b6ef6;
-      object-fit: cover;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RustMagic Leaderboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+  body {
+    margin: 0; padding: 20px;
+    background: #0a0c2f;
+    color: white;
+    font-family: 'Roboto', sans-serif;
+    overflow-x: hidden;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  /* Animated blue dots in chessboard pattern */
+  #background {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    background: #0a0c2f;
+  }
+  .dot {
+    position: absolute;
+    background: #5e82ff;
+    border-radius: 50%;
+    opacity: 0.7;
+    width: 6px;
+    height: 6px;
+    animation-name: moveDot;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes moveDot {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(0, 20px); }
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Buttons */
+  .site-buttons {
+    text-align: center;
+    margin-bottom: 30px;
+    z-index: 10;
+    position: relative;
+  }
+  .site-buttons button {
+    font-weight: 700;
+    font-size: 16px;
+    padding: 10px 30px;
+    margin: 0 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    color: white;
+    user-select: none;
+    background: #26a833; /* green default */
+  }
+  .site-buttons button#rustmagic {
+    background: #ff3be2; /* pink */
+  }
+  .site-buttons button#cheersino {
+    background: #26a833; /* green */
+  }
+  .site-buttons button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px #fff7;
+  }
+
+  /* Timer */
+  #timer-container {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #6580ffcc; /* light blue translucent */
+    font-weight: 600;
+    font-size: 14px;
+    user-select: none;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Top 3 */
+  .top3 {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 25px;
+    margin-bottom: 35px;
+    position: relative;
+    z-index: 10;
+  }
+  .top-card {
+    background: rgba(255 255 255 / 0.07);
+    border: 2px solid #6580ff;
+    border-radius: 12px;
+    width: 160px;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    user-select: none;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: border-color 0.3s ease;
+  }
+  .top-card:nth-child(1) {
+    order: 2;
+    transform: scale(1.15);
+  }
+  .top-card:nth-child(2) {
+    order: 1;
+  }
+  .top-card:nth-child(3) {
+    order: 3;
+  }
+  .top-card img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    margin-bottom: 12px;
+    object-fit: cover;
+    border: 2px solid #6580ff;
+  }
+  .top-card .name {
+    font-weight: 700;
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    overflow-wrap: anywhere;
+  }
+  .top-card .wager {
+    color: #ffd700;
+    font-weight: 600;
+    font-size: 1em;
+  }
+
+  /* Table */
+  table {
+    margin: 0 auto;
+    width: 460px;
+    border-collapse: collapse;
+    background: rgba(255 255 255 / 0.07);
+    border-radius: 12px;
+    overflow: hidden;
+    user-select: none;
+    color: white;
+    z-index: 10;
+    position: relative;
+  }
+  thead {
+    background: rgba(101 128 255 / 0.3);
+  }
+  th, td {
+    padding: 12px 14px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255 255 255 / 0.1);
+  }
+  tbody tr:hover {
+    background: rgba(101 128 255 / 0.12);
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+  tbody img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid #6580ff;
+  }
+</style>
 </head>
 <body>
-  <div id="content">
-    <div class="tabs">
-      <button class="tab-button active" data-board="cheersino">Cheersino</button>
-      <button class="tab-button" data-board="rustmagic">RustMagic</button>
-    </div>
-    <h1 id="page-title">Cheersino Leaderboard</h1>
-    <div id="timer-container">
-      Time left to update: <span id="timer">--</span>
-    </div>
-    <div id="top3"></div>
-    <table>
-      <thead>
-        <tr><th>Place</th><th>Avatar</th><th>Nickname</th><th>Wager</th></tr>
-      </thead>
-      <tbody id="others"></tbody>
-    </table>
-  </div>
 
-  <script>
-    // Ваш API endpoint та ключ
-    const API_BASE = 'https://rustmagic.com/r/piuz';
-    const API_KEY  = '00c5bb44-21d2-40e1-81da-8d64733de6a1';
+<div id="background"></div>
 
-    const tabs = document.querySelectorAll('.tab-button');
-    const title = document.getElementById('page-title');
+<h1>RustMagic Leaderboard</h1>
+
+<div class="site-buttons">
+  <button id="rustmagic" onclick="switchBoard('rustmagic')">RustMagic</button>
+  <button id="cheersino" onclick="switchBoard('cheersino')">Cheersino</button>
+</div>
+
+<div id="timer-container">Updating in: <span id="timer">--:--:--</span></div>
+
+<div class="top3" id="top3"></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Place</th>
+      <th>Avatar</th>
+      <th>Nickname</th>
+      <th>Wager</th>
+    </tr>
+  </thead>
+  <tbody id="others"></tbody>
+</table>
+
+<script>
+  const API_BASE = 'https://api.rustmagic.com/api/affiliates-data/users';
+  const API_KEY = '63f3864d-f8e8-4c33-ad1f-b4fb08865d70';
+
+  let currentBoard = 'rustmagic'; // 'rustmagic' or 'cheersino'
+
+  function getTimeRange() {
+    const now = Math.floor(Date.now() / 1000);
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60;
+    return { fromTime: sevenDaysAgo, toTime: now };
+  }
+
+  async function fetchBoard(board) {
+    const { fromTime, toTime } = getTimeRange();
+
+    const url = new URL(API_BASE);
+    url.searchParams.set('fromTime', fromTime);
+    url.searchParams.set('toTime', toTime);
+
+    try {
+      const res = await fetch(url.toString(), {
+        headers: { 'x-api-key': API_KEY }
+      });
+      if (!res.ok) throw new Error('Network response was not ok');
+      const json = await res.json();
+
+      // Фільтруємо за потрібним бордом
+      const filtered = json.data.filter(u => u.board === board);
+      return filtered;
+    } catch (e) {
+      console.error('Failed to fetch leaderboard:', e);
+      return [];
+    }
+  }
+
+  function updateLeaderboard(players) {
+    const sorted = players.sort((a,b) => b.wager - a.wager).slice(0,10);
     const top3Div = document.getElementById('top3');
     const othersTbody = document.getElementById('others');
-    let current = 'cheersino';
+    top3Div.innerHTML = '';
+    othersTbody.innerHTML = '';
 
-    async function fetchBoard(board) {
-      const res = await fetch(`${API_BASE}?board=${board}`, {
-        headers: { 'Authorization': API_KEY }
-      });
-      if (!res.ok) throw new Error(`API error ${res.status}`);
-      return res.json();
-    }
+    sorted.forEach((player, i) => {
+      if (i < 3) {
+        const card = document.createElement('div');
+        card.className = 'top-card';
+        card.innerHTML = `
+          <img src="${player.avatar}" alt="${player.name}"/>
+          <div class="name">${player.name}</div>
+          <div class="wager">${player.wager} coins</div>
+        `;
+        top3Div.appendChild(card);
+      } else {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${i+1}</td>
+          <td><img src="${player.avatar}" alt="${player.name}"/></td>
+          <td>${player.name}</td>
+          <td>${player.wager}</td>
+        `;
+        othersTbody.appendChild(row);
+      }
+    });
+  }
 
-    function render(players) {
-      title.textContent = `${current.charAt(0).toUpperCase()+current.slice(1)} Leaderboard`;
-      top3Div.innerHTML = '';
-      othersTbody.innerHTML = '';
-      players.sort((a,b) => b.wager - a.wager);
+  // Таймер до понеділка 00:00 UTC
+  function startTimer() {
+    const timerEl = document.getElementById('timer');
 
-      // Top 3
-      players.slice(0,3).forEach((p,i) => {
-        const c = document.createElement('div');
-        c.className = `top-card ${i===0?'first':i===1?'second':'third'}`;
-        c.innerHTML = `
-          <img src="${p.avatar}" alt="">
-          <div class="name">${p.name}</div>
-          <div class="wager">${p.wager} coins</div>`;
-        top3Div.appendChild(c);
-      });
+    function update() {
+      const now = new Date();
+      const day = now.getUTCDay();
+      const hour = now.getUTCHours();
+      const min = now.getUTCMinutes();
+      const sec = now.getUTCSeconds();
 
-      // Places 4–10
-      players.slice(3,10).forEach((p,idx) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${idx+4}</td>
-          <td><img src="${p.avatar}" alt=""></td>
-          <td>${p.name}</td>
-          <td>${p.wager} coins</td>`;
-        othersTbody.appendChild(tr);
-      });
-    }
+      let daysLeft = (8 - day) % 7;
+      if(daysLeft === 0 && (hour > 0 || min > 0 || sec > 0)) daysLeft = 7;
 
-    async function load(board) {
-      try {
-        const data = await fetchBoard(board);
-        render(data);
-      } catch(e) {
-        console.error(e);
+      const nextMonday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysLeft));
+      const diff = nextMonday.getTime() - now.getTime();
+
+      if(diff <= 0) {
+        timerEl.textContent = '00:00:00';
+      } else {
+        let totalSeconds = Math.floor(diff / 1000);
+        const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+        totalSeconds %= 3600;
+        const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+        const s = String(totalSeconds % 60).padStart(2, '0');
+        timerEl.textContent = `${h}:${m}:${s}`;
       }
     }
 
-    tabs.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabs.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        current = btn.dataset.board;
-        load(current);
-      });
-    });
+    update();
+    setInterval(update, 1000);
+  }
 
-    function updateTimer() {
-      const now = new Date();
-      const day = now.getUTCDay(), h = now.getUTCHours(),
-            m = now.getUTCMinutes(), s = now.getUTCSeconds();
-      let days = (8-day)%7, hrs = 23-h, mins = 59-m, secs = 59-s;
-      const pad = x => x.toString().padStart(2,'0');
-      document.getElementById('timer').textContent =
-        `${pad(days)}d ${pad(hrs)}h ${pad(mins)}m ${pad(secs)}s`;
+  function switchBoard(board) {
+    currentBoard = board;
+    loadLeaderboard();
+  }
+
+  async function loadLeaderboard() {
+    const players = await fetchBoard(currentBoard);
+    updateLeaderboard(players);
+  }
+
+  window.onload = () => {
+    startTimer();
+    loadLeaderboard();
+    createBackgroundDots();
+  };
+
+  // Створення шахової анімації точок у фоні
+  function createBackgroundDots() {
+    const background = document.getElementById('background');
+    const spacing = 40;
+    const size = 6;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    for(let y=0; y < vh; y += spacing) {
+      for(let x=0; x < vw; x += spacing) {
+        // Зсув на кожному другому рядку
+        const offsetX = (Math.floor(y / spacing) % 2) * (spacing / 2);
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dot.style.width = size + 'px';
+        dot.style.height = size + 'px';
+        dot.style.left = (x + offsetX) + 'px';
+        dot.style.top = y + 'px';
+        dot.style.animationDuration = (5 + Math.random()*5) + 's';
+        dot.style.animationDelay = (Math.random()*5) + 's';
+        background.appendChild(dot);
+      }
     }
-    setInterval(updateTimer, 1000);
-    updateTimer();
+  }
+</script>
 
-    load(current);
-  </script>
 </body>
 </html>
